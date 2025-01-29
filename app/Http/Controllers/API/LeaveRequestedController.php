@@ -3,13 +3,31 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Mail\LeaveRequestMail;
 use App\Models\LeaveRequest;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class LeaveRequestedController extends Controller
 {
-     /**
+    private function sendLeaveRequestEmail($leaveRequest)
+    {
+        // Get user details
+        $user = User::find($leaveRequest->users_id);
+
+        $leaveData = [
+            'user_name' => $user->name,
+            'date' => $leaveRequest->date,
+            'reason' => $leaveRequest->reason,
+            'status' => $leaveRequest->accept_status
+        ];
+
+        Mail::to('hirushafernando121@gmail.com')
+            ->send(new LeaveRequestMail($leaveData));
+    }
+    /**
      * Display a listing of the resource.
      */
     public function index()
@@ -50,7 +68,7 @@ class LeaveRequestedController extends Controller
 
         // Create the leave request
         $leaveRequest = LeaveRequest::create($request->all());
-
+        $this->sendLeaveRequestEmail($leaveRequest);
         return response()->json([
             "status" => 1,
             "message" => "Leave request created successfully",
@@ -63,7 +81,7 @@ class LeaveRequestedController extends Controller
      */
     public function show($id)
     {
-      
+
         $leaveRequest = LeaveRequest::find($id);
 
         if (!$leaveRequest) {
@@ -92,7 +110,7 @@ class LeaveRequestedController extends Controller
                 "message" => "Leave request not found"
             ], 404);
         }
-    
+
         $validator = Validator::make($request->all(), [
             'date' => 'required|date',
             'reason' => 'required|string',
@@ -102,7 +120,7 @@ class LeaveRequestedController extends Controller
             'not_accept_reason' => 'nullable|string',
             'updated_user_id' => 'nullable|exists:users,id',
         ]);
-    
+
         // If validation fails, return error response
         if ($validator->fails()) {
             return response()->json([
@@ -111,10 +129,11 @@ class LeaveRequestedController extends Controller
                 "data" => $validator->errors()->all()
             ], 422);
         }
-    
+
         // Update the leave request
         $leaveRequest->update($request->all());  // Simplified update
-    
+        // Send email for status update
+        $this->sendLeaveRequestEmail($leaveRequest);
         return response()->json([
             "status" => 1,
             "message" => "Leave request updated successfully",
