@@ -21,7 +21,7 @@ class AuthController extends Controller
             "email"=> "required|email",
             "password"=>"required",
             "confirm_password"=>"required|same:password",
-            "roles_id" => "required|exists:roles,id"
+            "role_id" => "required|exists:roles,id"
         ]);
         if($validator->fails()){
             return response()->json([
@@ -34,14 +34,14 @@ class AuthController extends Controller
             "name"=>$request->name,
             "email"=>$request->email,
             "password"=>bcrypt($request->password),
-            "roles_id" => $request->roles_id
+            "role_id" => $request->role_id
 
         ]);
 
         $response["token"] = $user -> createToken("MyApp")->plainTextToken;
         $response["name"] = $user -> name;
         $response["email"] = $user -> email;
-        $response["roles"] = $user->roles;
+        $response["roles"] = $user->role_id;
 
         return response()->json([
             "status" => 1,
@@ -55,7 +55,7 @@ class AuthController extends Controller
             $user = Auth::user();
             $response["name"] = $user->name;
             $response["email"] = $user->email;
-            $response["role"] = $user->role;
+            $response["role"] = $user->role_id;
 
             return response()->json([
                 "status" => 1,
