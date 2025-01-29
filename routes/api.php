@@ -3,7 +3,8 @@
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\PostController;
 use App\Http\Controllers\API\RolesController;
-use App\Http\Controllers\LeaveRequestController;
+use App\Http\Controllers\API\LeaveRequestController;
+use App\Http\Controllers\API\LeaveRequestedController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -31,13 +32,13 @@ Route::middleware("auth:sanctum")->group(function(){
     });
 
     Route::prefix('leave-requests')->group(function () {
-        Route::get('/', [LeaveRequestController::class, 'index']);
-        Route::get('/{id}', [LeaveRequestController::class, 'show']);
-        Route::post('/', [PostController::class, 'store']);
-        Route::put('/{id}', [LeaveRequestController::class, 'update']);
-        Route::delete('/{id}', [LeaveRequestController::class, 'destroy']);
+        Route::get('/', [LeaveRequestedController::class, 'index']);
+        Route::get('/{id}', [LeaveRequestedController::class, 'show']);
+        Route::post('/', [LeaveRequestedController::class, 'store']);
+        Route::put('/{id}', [LeaveRequestedController::class, 'update']);
+        Route::delete('/{id}', [LeaveRequestedController::class, 'destroy']);
     });
 
-    Route::apiResource('leave-requests', LeaveRequestController::class);
+   
 
 });
