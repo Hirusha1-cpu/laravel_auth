@@ -68,7 +68,7 @@ class LeaveRequestedController extends Controller
 
         // Create the leave request
         $leaveRequest = LeaveRequest::create($request->all());
-        $this->sendLeaveRequestEmail($leaveRequest);
+        // $this->sendLeaveRequestEmail($leaveRequest);
         return response()->json([
             "status" => 1,
             "message" => "Leave request created successfully",
@@ -133,7 +133,7 @@ class LeaveRequestedController extends Controller
         // Update the leave request
         $leaveRequest->update($request->all());  // Simplified update
         // Send email for status update
-        $this->sendLeaveRequestEmail($leaveRequest);
+        // $this->sendLeaveRequestEmail($leaveRequest);
         return response()->json([
             "status" => 1,
             "message" => "Leave request updated successfully",
