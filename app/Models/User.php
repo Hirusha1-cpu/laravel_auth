@@ -25,7 +25,9 @@ class User extends Authenticatable
         'role_id',
         'joinned_date',
         'leave_count',
-        'finger_printid'
+        'finger_printid',
+        'half_day_count'
+
     ];
 
     /**

@@ -32,7 +32,8 @@ class AuthController extends Controller
             "role_id" => "required|exists:roles,id",
             "joinned_date" => "required|date",
             "leave_count" => "required|integer",
-            "finger_printid" => "nullable|string"
+            "finger_printid" => "nullable|string",
+            "half_day_count" => "nullable|integer"
         ]);
 
         if ($validator->fails()) {
@@ -50,15 +51,17 @@ class AuthController extends Controller
             "role_id" => $request->role_id,
             "joinned_date" => $request->joinned_date,
             "leave_count" => $request->leave_count,
-            "finger_printid" => $request->finger_printid
+            "finger_printid" => $request->finger_printid,
+            "half_day_count" => $request->half_day_count
         ]);
 
         $leaves = $this->leaveCalculationService->calculateLeaves(
             $request->joinned_date,
-            $request->leave_count
+            $request->leave_count,
+            $user->half_day_count ?? 0  // Add this to your users table
         );
 
-        $response["token"] = $user->createToken("MyApp")->plainTextToken;
+        // $response["token"] = $user->createToken("MyApp")->plainTextToken;
         $response["name"] = $user->name;
         $response["email"] = $user->email;
         $response["roles"] = $user->role_id;
@@ -78,7 +81,8 @@ class AuthController extends Controller
             
             $leaves = $this->leaveCalculationService->calculateLeaves(
                 $user->joinned_date,
-                $user->leave_count
+                $user->leave_count,
+                $user->half_day_count ?? 0  // Add this to your users table
             );
 
             $response["name"] = $user->name;
@@ -86,7 +90,7 @@ class AuthController extends Controller
             $response["role"] = $user->role_id;
             $response["joinned_date"] = $user->joinned_date;
             $response["leave_count"] = $user->leave_count;
-            $response["leaves"] = $leaves;
+            // $response["leaves"] = $leaves;
             $response["token"] = $user->createToken("MyApp")->plainTextToken;
 
             return response()->json([
@@ -99,8 +103,8 @@ class AuthController extends Controller
         return response()->json([
             "status" => 0,
             "message" => "Authentication error",
-            "data" => null
-        ]);
+            "data" => null,
+        ],401);
     }
 
 

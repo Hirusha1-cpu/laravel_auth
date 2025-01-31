@@ -7,6 +7,7 @@ use App\Mail\LeaveRequestMail;
 use App\Models\LeaveRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
@@ -46,11 +47,13 @@ class LeaveRequestedController extends Controller
      */
     public function store(Request $request)
     {
+        // Get the authenticated user's ID
+        $userId = Auth::id();
+
         // Validate the request
         $validator = Validator::make($request->all(), [
             'date' => 'required|date',
             'reason' => 'required|string',
-            'users_id' => 'required|exists:users,id',
             'mailed_status' => 'boolean',
             'accept_status' => 'in:pending,accepted,rejected',
             'not_accept_reason' => 'nullable|string',
@@ -66,9 +69,12 @@ class LeaveRequestedController extends Controller
             ], 422);
         }
 
-        // Create the leave request
-        $leaveRequest = LeaveRequest::create($request->all());
-        // $this->sendLeaveRequestEmail($leaveRequest);
+        // Create the leave request with the authenticated user's ID
+        $leaveRequest = LeaveRequest::create([
+            ...$request->all(),
+            'users_id' => $userId
+        ]);
+
         return response()->json([
             "status" => 1,
             "message" => "Leave request created successfully",
