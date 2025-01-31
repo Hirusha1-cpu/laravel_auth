@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\LeaveDetailsController;
 use App\Http\Controllers\API\PostController;
 use App\Http\Controllers\API\RolesController;
 use App\Http\Controllers\API\LeaveRequestController;
@@ -33,13 +34,21 @@ Route::middleware("auth:sanctum")->group(function(){
 
     Route::prefix('leave-requests')->group(function () {
         Route::get('/', [LeaveRequestedController::class, 'index']);
-        Route::get('/{id}', [LeaveRequestedController::class, 'show']);
+        Route::get('/user', [LeaveRequestedController::class, 'show']);
         Route::post('/', [LeaveRequestedController::class, 'store']);
-        Route::put('/{id}', [LeaveRequestedController::class, 'update']);
-        Route::delete('/{id}', [LeaveRequestedController::class, 'destroy']);
+        Route::put('/user/{postid}', [LeaveRequestedController::class, 'update']);
+        Route::delete('/user/{postid}', [LeaveRequestedController::class, 'destroy']);
     });
 
-   
-
+    Route::prefix('leave-details')->group(function () {
+        Route::get('/user', [LeaveDetailsController::class, 'getUserLeaveDetails']);
+        Route::get('/all', [LeaveDetailsController::class, 'getAllUsersLeaveDetails']);
+    });
+    
+    
+    
+});
+Route::prefix('managers')->group(function () {
+    Route::get('/', [AuthController::class, 'getManagersDetails']);
 });
 

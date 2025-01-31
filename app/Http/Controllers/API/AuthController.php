@@ -74,6 +74,28 @@ class AuthController extends Controller
         ]);
     }
 
+    public function getManagersDetails()
+    {
+        // Fetch all users whose role's designation is "Manager"
+        $managers = User::whereHas('role', function ($query) {
+            $query->where('designation', 'Manager');
+        })->with('role')->get();;
+    
+        if ($managers->isEmpty()) {
+            return response()->json([
+                "status" => 0,
+                "message" => "No managers found",
+                "manager_details" => []
+            ], 404);
+        }
+    
+        return response()->json([
+            "status" => 1,
+            "message" => "Managers fetched successfully",
+            "manager_details" => $managers
+        ]);
+    }
+    
     public function login(Request $request)
     {
         if (Auth::attempt(["email" => $request->email, "password" => $request->password])) {
@@ -87,7 +109,11 @@ class AuthController extends Controller
 
             $response["name"] = $user->name;
             $response["email"] = $user->email;
-            $response["role"] = $user->role_id;
+            $response["role"] = [
+                'id' => $user->role_id,
+                'designation' => $user->role->designation,
+                'description' => $user->role->slug,
+            ];
             $response["joinned_date"] = $user->joinned_date;
             $response["leave_count"] = $user->leave_count;
             // $response["leaves"] = $leaves;
@@ -96,7 +122,7 @@ class AuthController extends Controller
             return response()->json([
                 "status" => 1,
                 "message" => "Login successful",
-                "data" => $response
+                "user" => $response
             ]);
         }
 

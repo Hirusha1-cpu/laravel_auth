@@ -21,18 +21,26 @@ class RolesController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'designation' => 'required|string|max:255',
         ]);
 
-        $role = Roles::create([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name)
-        ]);
+        try {
+            $role = Roles::create([
+                'designation' => $request->designation,
+                'slug' => Str::slug($request->designation)
+            ]);
 
-        return response()->json([
-            'status' => 1,
-            'message' => 'Role created successfully',
-            'data' => $role
-        ]);
+            return response()->json([
+                'status' => 1,
+                'message' => 'Role created successfully',
+                'data' => $role
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 0,
+                'message' => 'Error creating role',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

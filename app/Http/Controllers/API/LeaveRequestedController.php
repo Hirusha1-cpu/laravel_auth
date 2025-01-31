@@ -85,10 +85,15 @@ class LeaveRequestedController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show($id)
+    public function show()
     {
 
-        $leaveRequest = LeaveRequest::find($id);
+        // Get the authenticated user's ID
+        $userId = Auth::id();
+    
+        // Find the leave request
+        // $leaveRequest = LeaveRequest::find($id);
+        $leaveRequest = LeaveRequest::where('users_id', $userId)->get();
 
         if (!$leaveRequest) {
             return response()->json([
@@ -107,26 +112,36 @@ class LeaveRequestedController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request,$id)
     {
-        $leaveRequest = LeaveRequest::find($id);
+        // Get the authenticated user's ID
+        $userId = Auth::id();
+    
+        // Find the leave request
+        // $leaveRequest = LeaveRequest::find($id);
+        // $leaveRequest = LeaveRequest::where('users_id', $userId)->get();
+        $leaveRequest = LeaveRequest::where('users_id', $userId)->where('id', $id)->first();
+
+
+    
+    
+        // If leave request not found, return error response
         if (!$leaveRequest) {
             return response()->json([
                 "status" => 0,
                 "message" => "Leave request not found"
             ], 404);
         }
-
+    
+        // Validate the request
         $validator = Validator::make($request->all(), [
-            'date' => 'required|date',
-            'reason' => 'required|string',
-            'users_id' => 'required|exists:users,id',
-            'mailed_status' => 'boolean',
-            'accept_status' => 'in:pending,accepted,rejected',
+            'date' => 'sometimes|date', // 'sometimes' means the field is optional
+            'reason' => 'sometimes|string',
+            'mailed_status' => 'sometimes|boolean',
+            'accept_status' => 'sometimes|in:pending,accepted,rejected',
             'not_accept_reason' => 'nullable|string',
-            'updated_user_id' => 'nullable|exists:users,id',
         ]);
-
+    
         // If validation fails, return error response
         if ($validator->fails()) {
             return response()->json([
@@ -135,11 +150,17 @@ class LeaveRequestedController extends Controller
                 "data" => $validator->errors()->all()
             ], 422);
         }
-
+    
         // Update the leave request
-        $leaveRequest->update($request->all());  // Simplified update
-        // Send email for status update
-        // $this->sendLeaveRequestEmail($leaveRequest);
+        $leaveRequest->update([
+            'date' => $request->input('date', $leaveRequest->date), // Use existing value if not provided
+            'reason' => $request->input('reason', $leaveRequest->reason),
+            'mailed_status' => $request->input('mailed_status', $leaveRequest->mailed_status),
+            'accept_status' => $request->input('accept_status', $leaveRequest->accept_status),
+            'not_accept_reason' => $request->input('not_accept_reason', $leaveRequest->not_accept_reason),
+            'updated_user_id' => $userId, // Set the updated_user_id to the authenticated user's ID
+        ]);
+    
         return response()->json([
             "status" => 1,
             "message" => "Leave request updated successfully",
@@ -151,7 +172,10 @@ class LeaveRequestedController extends Controller
      */
     public function destroy($id)
     {
-        $leaveRequest = LeaveRequest::find($id);
+        $userId = Auth::id();
+        // $leaveRequest = LeaveRequest::find($id);
+        $leaveRequest = LeaveRequest::where('users_id', $userId)->where('id', $id)->first();
+
 
         // If leave request not found, return error response
         if (!$leaveRequest) {
