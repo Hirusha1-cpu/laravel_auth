@@ -26,7 +26,9 @@ class User extends Authenticatable
         'joinned_date',
         'leave_count',
         'finger_printid',
-        'half_day_count'
+        'half_day_count',
+        'assigned_manager',
+        'account_status',
 
     ];
 

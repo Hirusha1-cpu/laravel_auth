@@ -44,7 +44,8 @@ Route::middleware("auth:sanctum")->group(function(){
         Route::get('/user', [LeaveDetailsController::class, 'getUserLeaveDetails']);
         Route::get('/all', [LeaveDetailsController::class, 'getAllUsersLeaveDetails']);
     });
-    
+    Route::post('/approve-user/{id}', [AuthController::class, 'approveUser']);
+
     
     
 });

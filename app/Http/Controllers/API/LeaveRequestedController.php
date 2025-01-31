@@ -122,8 +122,6 @@ class LeaveRequestedController extends Controller
         // $leaveRequest = LeaveRequest::where('users_id', $userId)->get();
         $leaveRequest = LeaveRequest::where('users_id', $userId)->where('id', $id)->first();
 
-
-    
     
         // If leave request not found, return error response
         if (!$leaveRequest) {
@@ -135,10 +133,10 @@ class LeaveRequestedController extends Controller
     
         // Validate the request
         $validator = Validator::make($request->all(), [
-            'date' => 'sometimes|date', // 'sometimes' means the field is optional
-            'reason' => 'sometimes|string',
-            'mailed_status' => 'sometimes|boolean',
-            'accept_status' => 'sometimes|in:pending,accepted,rejected',
+            'date' => 'nullable|date', // 'sometimes' means the field is optional
+            'reason' => 'nullable|string',
+            'mailed_status' => 'nullable|boolean',
+            'accept_status' => 'nullable|in:pending,accepted,rejected',
             'not_accept_reason' => 'nullable|string',
         ]);
     
