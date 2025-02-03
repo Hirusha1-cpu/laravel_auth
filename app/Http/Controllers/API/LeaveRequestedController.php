@@ -38,7 +38,7 @@ class LeaveRequestedController extends Controller
 
         // Apply date range filter if provided
         if ($request->has('start_date') && $request->has('end_date')) {
-            $query->whereBetween('date', [$request->start_date, $request->end_date]);
+            $query->whereBetween('start_date', [$request->start_date, $request->end_date]);
         }
 
         // Apply status filter if provided
@@ -47,7 +47,7 @@ class LeaveRequestedController extends Controller
         }
 
         // Get all leave requests ordered by date
-        $leaveHistory = $query->orderBy('date', 'desc')
+        $leaveHistory = $query->orderBy('start_date', 'desc')
             ->get()
             ->groupBy('users_id')
             ->map(function ($userLeaves) {
@@ -227,7 +227,7 @@ class LeaveRequestedController extends Controller
         $validator = Validator::make($request->all(), [
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
-            'leave_type' => 'required|in:annual,casual',
+            'leave_type' => 'required|in:full,half',
             'reason' => 'required|string',
             'mailed_status' => 'boolean',
             'accept_status' => 'in:pending,accepted,rejected',

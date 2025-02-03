@@ -27,7 +27,7 @@ class RolesController extends Controller
         try {
             $role = Roles::create([
                 'designation' => $request->designation,
-                'slug' => Str::slug($request->designation)
+                'description' => $request->description ?? "No description provided",
             ]);
 
             return response()->json([

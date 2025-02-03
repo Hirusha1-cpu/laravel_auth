@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\DepartmentsController;
 use App\Http\Controllers\API\LeaveDetailsController;
 use App\Http\Controllers\API\PostController;
 use App\Http\Controllers\API\RolesController;
@@ -24,13 +25,7 @@ Route::middleware("auth:sanctum")->group(function () {
         Route::put('/{id}', [PostController::class, 'update']);
         Route::delete('/{id}', [PostController::class, 'destroy']);
     });
-    Route::prefix('roles')->group(function () {
-        Route::get('/', [RolesController::class, 'index']);
-        // Route::get('/{id}', [PostController::class, 'show']);
-        Route::post('/', [RolesController::class, 'store']);
-        // Route::put('/{id}', [PostController::class, 'update']);
-        // Route::delete('/{id}', [PostController::class, 'destroy']);
-    });
+
 
     Route::prefix('leave-requests')->group(function () {
         Route::get('/', [LeaveRequestedController::class, 'index']);
@@ -54,4 +49,14 @@ Route::middleware("auth:sanctum")->group(function () {
         Route::get('/', [AuthController::class, 'getManagersDetails']);
     });
     Route::get('leave-requests/all-users', [LeaveRequestedController::class, 'getAllUsersLeaveHistory']);
+    Route::prefix('roles')->group(function () {
+        Route::get('/', [RolesController::class, 'index']);
+        // Route::get('/{id}', [PostController::class, 'show']);
+        Route::post('/', [RolesController::class, 'store']);
+        // Route::put('/{id}', [PostController::class, 'update']);
+        // Route::delete('/{id}', [PostController::class, 'destroy']);
+    });
+
+    Route::get('/department/managers', [DepartmentsController::class, 'getDepartmentManagers']);
+
 });

@@ -23,12 +23,14 @@ class User extends Authenticatable
         'email',
         'password',
         'role_id',
+        'department_id',
         'joinned_date',
         'leave_count',
         'finger_printid',
         'half_day_count',
         'assigned_manager',
         'account_status',
+        
 
     ];
 
@@ -75,5 +77,10 @@ class User extends Authenticatable
     public function subordinates()
     {
         return $this->hasMany(User::class, 'assigned_manager');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
     }
 }

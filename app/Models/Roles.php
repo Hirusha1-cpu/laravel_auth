@@ -8,7 +8,7 @@ class Roles extends Model
 {
     protected $table = 'roles';  // Make sure this matches your table name
 
-    protected $fillable = ['designation', 'slug'];
+    protected $fillable = ['designation', 'description'];
 
     public function users()
     {

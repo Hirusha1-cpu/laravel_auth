@@ -87,7 +87,7 @@ class AuthController extends Controller
 
             DB::commit();
 
-            
+
 
             // return response()->json([
             //     "status" => 1,
@@ -106,7 +106,6 @@ class AuthController extends Controller
             ], 500);
         }
     }
-
     public function register(Request $request)
     {
         Log::info($request);
@@ -115,7 +114,8 @@ class AuthController extends Controller
             "email" => "required|email|unique:users,email",
             "password" => "required|min:8",
             "confirm_password" => "required|same:password",
-            "role_id" => "required|exists:roles,id",
+            "role_id" => "nullable|exists:roles,id",
+            "department_id" => "nullable|exists:departments,id",  // Add this
             "joinned_date" => "required|date|before:today",
             "leave_count" => "nullable|integer",
             "finger_printid" => "nullable|string",
@@ -137,7 +137,7 @@ class AuthController extends Controller
             // $ceo = User::whereHas('role', function ($query) {
             //     $query->where('designation', 'CEO');
             // })->first();
-            $ceo = Roles::where('designation', 'CEO')->first();
+            $ceo = Roles::where('designation', 'ceo')->first();
             Log::info('CEO found:', ['ceo' => $ceo]);
             $assignedManager = $ceo ? $ceo->id : null;
         } else {
@@ -150,6 +150,7 @@ class AuthController extends Controller
             "email" => $request->email,
             "password" => bcrypt($request->password),
             "role_id" => $request->role_id,
+            "department_id" => $request->department_id,  // Add this
             "joinned_date" => $request->joinned_date,
             "leave_count" => $request->leave_count,
             "finger_printid" => $request->finger_printid,
@@ -173,6 +174,10 @@ class AuthController extends Controller
                 "id" => $user->role_id,
                 "designation" => $user->role->designation,
             ],
+            "department" => $user->department ? [  
+                "id" => $user->department->id,
+                "name" => $user->department->name,
+            ] : null,
             "joinned_date" => $user->joinned_date,
             "leave_count" => $user->leave_count,
             "leaves" => $leaves,
