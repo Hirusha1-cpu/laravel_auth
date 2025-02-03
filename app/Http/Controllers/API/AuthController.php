@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Roles;
 use App\Models\User;
 use App\Services\LeaveCalculationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
@@ -22,8 +25,91 @@ class AuthController extends Controller
         $this->leaveCalculationService = $leaveCalculationService;
     }
 
+    public function register12(Request $request)
+    {
+        Log::info($request->all());
+
+        $validator = Validator::make($request->all(), [
+            "name" => "required|string",
+            "email" => "required|email|unique:users,email",
+            "password" => "required|min:8",
+            "confirm_password" => "required|same:password",
+            "role_id" => "required|exists:roles,id",
+            "joinned_date" => "required|date|before:today",
+            "leave_count" => "nullable|integer",
+            "finger_printid" => "nullable|string",
+            "half_day_count" => "nullable|integer",
+            "isManager" => "required|boolean",
+            "selectedManager" => "nullable|exists:users,id"
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                "status" => 0,
+                "message" => "Validation error",
+                "data" => $validator->errors()->all()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+            $roleCheck = Roles::where('designation', 'CEO')->first();
+            Log::info('Role Check:', ['role' => $roleCheck]);
+            // Find CEO using role relationship
+            if ($request->isManager) {
+                // $ceo = User::whereHas('role', function ($query) {
+                //     $query->where('designation', 'CEO');
+                // })->first();
+                $ceo = Roles::where('designation', 'CEO')->first();
+                Log::info('CEO found:', ['ceo' => $ceo]);
+                $assignedManager = $ceo ? $ceo->id : null;
+            } else {
+                $assignedManager = $request->selectedManager;
+            }
+
+            Log::info('Assigned Manager:', ['manager_id' => $assignedManager]);
+
+            $user = User::create([
+                "name" => $request->name,
+                "email" => $request->email,
+                "password" => bcrypt($request->password),
+                "role_id" => $request->role_id,
+                "joinned_date" => $request->joinned_date,
+                "leave_count" => $request->leave_count,
+                "finger_printid" => $request->finger_printid,
+                "half_day_count" => $request->half_day_count,
+                "assigned_manager" => $assignedManager,
+                "account_status" => "Pending"
+            ]);
+
+            // Generate token for the new user
+            $token = $user->createToken('auth-token')->plainTextToken;
+
+            DB::commit();
+
+            
+
+            // return response()->json([
+            //     "status" => 1,
+            //     "message" => "User registered wait for approval",
+            //     "data" => $user,
+            //     "token" => $token
+            // ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Registration error:', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                "status" => 0,
+                "message" => "Registration failed",
+                "error" => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function register(Request $request)
     {
+        Log::info($request);
         $validator = Validator::make($request->all(), [
             "name" => "required|string",
             "email" => "required|email|unique:users,email",
@@ -45,15 +131,20 @@ class AuthController extends Controller
             ], 422);
         }
 
+        Log::info($request->selectedManager);
+
         if ($request->isManager) {
-            $ceo = User::whereHas('role', function ($query) {
-                $query->where('designation', 'CEO');
-            })->first();
-            
+            // $ceo = User::whereHas('role', function ($query) {
+            //     $query->where('designation', 'CEO');
+            // })->first();
+            $ceo = Roles::where('designation', 'CEO')->first();
+            Log::info('CEO found:', ['ceo' => $ceo]);
             $assignedManager = $ceo ? $ceo->id : null;
         } else {
             $assignedManager = $request->selectedManager;
         }
+
+        Log::info($assignedManager);
         $user = User::create([
             "name" => $request->name,
             "email" => $request->email,
@@ -75,6 +166,7 @@ class AuthController extends Controller
         );
 
         $response = [
+            "user_id" => $user->id,
             "name" => $user->name,
             "email" => $user->email,
             "role" => [
@@ -83,7 +175,7 @@ class AuthController extends Controller
             ],
             "joinned_date" => $user->joinned_date,
             "leave_count" => $user->leave_count,
-            // "leaves" => $leaves,
+            "leaves" => $leaves,
             "assigned_manager" => $user->assigned_manager,
             "account_status" => "Pending"
         ];
@@ -112,12 +204,12 @@ class AuthController extends Controller
         }
 
         // Check if the manager is authorized to approve this user
-        // if ($user->assigned_manager !== $manager->id) {
-        //     return response()->json([
-        //         "status" => 0,
-        //         "message" => "Unauthorized. You are not assigned to approve this user."
-        //     ], 403);
-        // }
+        if ($user->assigned_manager !== $manager->id) {
+            return response()->json([
+                "status" => 0,
+                "message" => "Unauthorized. You are not assigned to approve this user."
+            ], 403);
+        }
 
         // Update the account status to "Approved"
         $user->update(["account_status" => "Approved"]);
@@ -134,7 +226,7 @@ class AuthController extends Controller
         ]);
     }
 
-    public function register1(Request $request)
+    public function register122(Request $request)
     {
         $validator = Validator::make($request->all(), [
             "name" => "required|string",
@@ -188,6 +280,11 @@ class AuthController extends Controller
 
     public function getManagersDetails()
     {
+
+        $user = Auth::user();
+        $token = $user->tokens()->first()->token;
+        Log::info($token);
+
         // Fetch all users whose role's designation is "Manager"
         $managers = User::whereHas('role', function ($query) {
             $query->where('designation', 'Manager');
@@ -210,6 +307,7 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        Log::info($request);
         if (Auth::attempt(["email" => $request->email, "password" => $request->password])) {
             $user = Auth::user();
 
@@ -228,6 +326,7 @@ class AuthController extends Controller
                 $user->half_day_count ?? 0
             );
 
+            $response["id"] = $user->id;
             $response["name"] = $user->name;
             $response["email"] = $user->email;
             $response["role"] = [
@@ -237,8 +336,9 @@ class AuthController extends Controller
             $response["joinned_date"] = $user->joinned_date;
             $response["leave_count"] = $user->leave_count;
             $response["account_status"] = $user->account_status;
-            // $response["leaves"] = $leaves;
+            $response["leaves"] = $leaves;
             $response["token"] = $user->createToken("MyApp")->plainTextToken;
+            Log::info($response);
 
             return response()->json([
                 "status" => 1,

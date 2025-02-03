@@ -14,9 +14,9 @@ use Illuminate\Support\Facades\Route;
 // })->middleware('auth:sanctum');
 
 
-Route::post("register",[AuthController::class,"register"]);
-Route::post("login",[AuthController::class,"login"]);
-Route::middleware("auth:sanctum")->group(function(){
+Route::post("register", [AuthController::class, "register"]);
+Route::post("login", [AuthController::class, "login"]);
+Route::middleware("auth:sanctum")->group(function () {
     Route::prefix('posts')->group(function () {
         Route::get('/', [PostController::class, 'index']);
         Route::get('/{id}', [PostController::class, 'show']);
@@ -43,13 +43,15 @@ Route::middleware("auth:sanctum")->group(function(){
     Route::prefix('leave-details')->group(function () {
         Route::get('/user', [LeaveDetailsController::class, 'getUserLeaveDetails']);
         Route::get('/all', [LeaveDetailsController::class, 'getAllUsersLeaveDetails']);
+        ROute::get('/leaveDetails', [LeaveDetailsController::class, 'get_leave_details']);
     });
     Route::post('/approve-user/{id}', [AuthController::class, 'approveUser']);
 
-    
-    
-});
-Route::prefix('managers')->group(function () {
-    Route::get('/', [AuthController::class, 'getManagersDetails']);
-});
+    Route::get('leave-requests/user/{userId}/history', [LeaveRequestedController::class, 'getUserLeaveHistory']);
+    Route::get('leave-requests/user/{userId}/stats', [LeaveRequestedController::class, 'getUserLeaveStats']);
 
+    Route::prefix('managers')->group(function () {
+        Route::get('/', [AuthController::class, 'getManagersDetails']);
+    });
+    Route::get('leave-requests/all-users', [LeaveRequestedController::class, 'getAllUsersLeaveHistory']);
+});

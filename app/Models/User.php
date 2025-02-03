@@ -64,4 +64,16 @@ class User extends Authenticatable
     {
         return $this->role->slug === $role;
     }
+
+    // Define relationship for manager
+    public function manager()
+    {
+        return $this->belongsTo(User::class, 'assigned_manager');
+    }
+
+    // Define relationship for subordinates
+    public function subordinates()
+    {
+        return $this->hasMany(User::class, 'assigned_manager');
+    }
 }

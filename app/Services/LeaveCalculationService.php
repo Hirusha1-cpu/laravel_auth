@@ -1,11 +1,15 @@
 <?php
+
 namespace App\Services;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+use SebastianBergmann\Diff\Diff;
 
-
-class LeaveCalculationService {
-    public function calculateLeaves($joinDate, $initialLeaveCount, $halfDayCount ) {
+class LeaveCalculationService
+{
+    public function calculateLeaves($joinDate, $initialLeaveCount, $halfDayCount)
+    {
         $now = Carbon::now();
         $joinDate = Carbon::parse($joinDate);
 
@@ -54,14 +58,30 @@ class LeaveCalculationService {
         $remainingLeaves = $totalLeaves - $fullDayEquivalentTaken;
 
         // Calculate no-pay days
-        $noPayCount = $fullDayEquivalentTaken > $totalLeaves ? 
+        $noPayCount = $fullDayEquivalentTaken > $totalLeaves ?
             $fullDayEquivalentTaken - $totalLeaves : 0;
+        // $difference_leaves = $annualLeaves - $initialLeaveCount;
+
+        $difference_leaves = $casualLeaves - $fullDayEquivalentTaken;
+        Log::info("Difference in total leaves: " . $difference_leaves);
+
+        if ($difference_leaves > 0) {
+            // Deduct from casual leaves first, keep annual leaves untouched
+            $more_casual_leaves = min($difference_leaves, $casualLeaves);
+            $more_annual_leaves = $annualLeaves; // Annual leaves remain same
+        } else {
+            // Casual leaves are exhausted, deduct the rest from annual leaves
+            $more_casual_leaves = 0;
+            $more_annual_leaves = max(0, $annualLeaves + $difference_leaves); // Reduce from annual
+        }
 
         return [
             'annual_leaves' => $annualLeaves,
             'casual_leaves' => $casualLeaves,
             'total_leaves' => $totalLeaves,
             'remaining_leaves' => max(0, $remainingLeaves),
+            'more_annual_leaves' => $more_annual_leaves,
+            'more_casual_leaves' => $more_casual_leaves,
             'no_pay_count' => $noPayCount,
             'half_day_count' => $halfDayAllocation['remaining'],
             'total_half_days_allowed' => $halfDayAllocation['total'],
@@ -70,11 +90,12 @@ class LeaveCalculationService {
             'join_quarter' => $joinQuarter,
             'initial_month' => $joinDate->month,
             'full_day_equivalent_taken' => $fullDayEquivalentTaken,
-            '$halfDayCount'=>$halfDayCount
+            '$halfDayCount' => $halfDayCount
         ];
     }
 
-    private function calculateAnnualLeaves($yearsOfService, $joinQuarter) {
+    private function calculateAnnualLeaves($yearsOfService, $joinQuarter)
+    {
         // For 2+ years of service, always get full 14 annual leaves
         if ($yearsOfService >= 2) {
             return 14;
@@ -89,7 +110,8 @@ class LeaveCalculationService {
         return 0;
     }
 
-    private function calculateHalfDays($joinDate, $now, $yearsOfService) {
+    private function calculateHalfDays($joinDate, $now, $yearsOfService)
+    {
         $totalAllowedHalfDays = 12; // Maximum half days per year
 
         // For employees who joined this year
