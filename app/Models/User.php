@@ -30,8 +30,6 @@ class User extends Authenticatable
         'half_day_count',
         'assigned_manager',
         'account_status',
-        
-
     ];
 
     /**
